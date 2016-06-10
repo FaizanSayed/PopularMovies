@@ -1,5 +1,6 @@
 package com.example.faizan.popularmovies;
 
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.app.Fragment;
@@ -12,7 +13,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.BaseAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
 import android.widget.ListView;
+
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,13 +31,16 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class MovieFragment extends Fragment {
 
-    private ArrayAdapter<String> mMovieAdapter;
+    private final String LOG_TAG = MovieFragment.class.getSimpleName();
+    private ImageAdapter mMovieAdapter;
 
     public MovieFragment() {
     }
@@ -49,17 +58,17 @@ public class MovieFragment extends Fragment {
                              Bundle savedInstanceState) {
         // The ArrayAdapter will take data from a source and
         // use it to populate the ListView it's attached to.
-        mMovieAdapter = new ArrayAdapter<String>(
-                                getActivity(), // The current context (this activity)
-                                R.layout.list_item_movies, // The name of the layout ID
-                                R.id.list_item_movies_textview, // The ID of the textview to populate
-                                new ArrayList<String>());
+        mMovieAdapter =
+                new ImageAdapter(getActivity(),
+                        R.layout.list_item_movies,
+                        R.id.list_item_movies_imageview,
+                        new ArrayList<MovieInfo>());
 
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
-        // Get a reference to the ListView, and attach the adapter to it.
-        ListView listView = (ListView) rootView.findViewById(R.id.listview_movies);
-        listView.setAdapter(mMovieAdapter);
+        // Get a reference to the GridView, and attach the adapter to it.
+        GridView gridView = (GridView) rootView.findViewById(R.id.gridview_movies);
+        gridView.setAdapter(mMovieAdapter);
 
         return rootView;
     }
@@ -76,7 +85,7 @@ public class MovieFragment extends Fragment {
         updateMovieList();
     }
 
-    public class FetchMovieListTask extends AsyncTask<String, Void, String[]> {
+    public class FetchMovieListTask extends AsyncTask<String, Void, MovieInfo[]> {
         private final String LOG_TAG = FetchMovieListTask.class.getSimpleName();
 
         /**
@@ -86,7 +95,7 @@ public class MovieFragment extends Fragment {
          * Fortunately parsing is easy: constructor takes the JSON string and converts it
          * into an Object hierarchy for us.
          */
-        private String[] getMovieDataFromJson(String movieJsonStr, int numItems)
+        private MovieInfo[] getMovieDataFromJson(String movieJsonStr)
                                                                         throws JSONException {
             // These are the names of the JSON objects that need to be extracted.
             String TMDB_PAGE = "page";
@@ -109,25 +118,32 @@ public class MovieFragment extends Fragment {
             JSONObject movieJson = new JSONObject(movieJsonStr);
             JSONArray movieList = movieJson.getJSONArray(TMDB_RESULTS);
 
-            String[] resultStrs = new String[numItems];
+            //String[] resultStrs = new String[numItems];
+            MovieInfo[] resultMovieInfoItems = new MovieInfo[movieList.length()];
 
-            for (int i = 0; i < numItems; i++) {
+            for (int i = 0; i < movieList.length(); i++) {
+                String poster_path;
                 String title;
+                String overview;
                 double popularity;
                 double vote_count;
+                MovieInfo movieInfo;
 
                 // Get the JSON object representing the movie list item.
                 JSONObject movie_list_item = movieList.getJSONObject(i);
+                poster_path = movie_list_item.getString(TMDB_POSTER_PATH);
                 title = movie_list_item.getString(TMDB_ORIGINAL_TITLE);
+                overview = movie_list_item.getString(TMDB_OVERVIEW);
                 popularity = movie_list_item.getDouble(TMDB_POPULARITY);
                 vote_count = movie_list_item.getDouble(TMDB_VOTE_COUNT);
-                resultStrs[i] = title + " - " + popularity + " - " + vote_count;
+                movieInfo = new MovieInfo(poster_path, title, overview, popularity, vote_count);
+                resultMovieInfoItems[i] = movieInfo;
             }
-            return resultStrs;
+            return resultMovieInfoItems;
         }
 
         @Override
-        protected String[] doInBackground(String... params) {
+        protected MovieInfo[] doInBackground(String... params) {
 
 //            if (params.length == 0) {
 //                return null;
@@ -141,8 +157,6 @@ public class MovieFragment extends Fragment {
             // Will contain the raw JSON response as a string.
             String movieJsonStr = null;
 
-            String format = "json";
-            int numItems = 10;
 
             try {
                 // Construct the URL for the TheMovieDatabase query
@@ -204,7 +218,7 @@ public class MovieFragment extends Fragment {
             }
 
             try {
-                return getMovieDataFromJson(movieJsonStr, numItems);
+                return getMovieDataFromJson(movieJsonStr);
             } catch (JSONException e) {
                 Log.e(LOG_TAG, e.getMessage(), e);
                 e.printStackTrace();
@@ -215,11 +229,11 @@ public class MovieFragment extends Fragment {
         }
 
         @Override
-        protected void onPostExecute(String[] result) {
+        protected void onPostExecute(MovieInfo[] result) {
             if (result != null) {
                 mMovieAdapter.clear();
-                for (String movieItemStr : result) {
-                    mMovieAdapter.add(movieItemStr);
+                for(MovieInfo movieInfoItem: result) {
+                    mMovieAdapter.add(movieInfoItem);
                 }
                 // New data is back from the server. Hooray!
             }
