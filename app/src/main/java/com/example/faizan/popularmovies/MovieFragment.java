@@ -1,16 +1,21 @@
 package com.example.faizan.popularmovies;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
@@ -41,6 +46,8 @@ public class MovieFragment extends Fragment {
 
     private final String LOG_TAG = MovieFragment.class.getSimpleName();
     private ImageAdapter mMovieAdapter;
+    private EndlessScrollListener endlessScrollListener;
+    private GridView gridView;
 
     public MovieFragment() {
     }
@@ -52,6 +59,21 @@ public class MovieFragment extends Fragment {
         setHasOptionsMenu(true);
     }
 
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.moviefragment, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        if (id == R.id.action_refresh) {
+            updateMovieList();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -67,15 +89,33 @@ public class MovieFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
         // Get a reference to the GridView, and attach the adapter to it.
-        GridView gridView = (GridView) rootView.findViewById(R.id.gridview_movies);
+        gridView = (GridView) rootView.findViewById(R.id.gridview_movies);
         gridView.setAdapter(mMovieAdapter);
+        endlessScrollListener = new EndlessScrollListener();
+        gridView.setOnScrollListener(endlessScrollListener);
+        gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                MovieInfo movie_item = mMovieAdapter.getItem(position);
+                Intent intent = new Intent(getActivity(), DetailActivity.class);
+                intent.putExtra("posterPath", movie_item.posterPath);
+                intent.putExtra("title", movie_item.title);
+                intent.putExtra("overview", movie_item.overview);
+                intent.putExtra("popularity", movie_item.popularity);
+                intent.putExtra("voteAverage", movie_item.voteAverage);
+                startActivity(intent);
+            }
+        });
 
         return rootView;
     }
 
     private void updateMovieList() {
         FetchMovieListTask movieListTask = new FetchMovieListTask();
-        movieListTask.execute();
+        mMovieAdapter.clear();
+        endlessScrollListener = new EndlessScrollListener();
+        gridView.setOnScrollListener(endlessScrollListener);
+        movieListTask.execute(Integer.toString(1));
 
     }
 
@@ -126,7 +166,7 @@ public class MovieFragment extends Fragment {
                 String title;
                 String overview;
                 double popularity;
-                double vote_count;
+                double vote_average;
                 MovieInfo movieInfo;
 
                 // Get the JSON object representing the movie list item.
@@ -135,8 +175,8 @@ public class MovieFragment extends Fragment {
                 title = movie_list_item.getString(TMDB_ORIGINAL_TITLE);
                 overview = movie_list_item.getString(TMDB_OVERVIEW);
                 popularity = movie_list_item.getDouble(TMDB_POPULARITY);
-                vote_count = movie_list_item.getDouble(TMDB_VOTE_COUNT);
-                movieInfo = new MovieInfo(poster_path, title, overview, popularity, vote_count);
+                vote_average = movie_list_item.getDouble(TMDB_VOTE_AVERAGE);
+                movieInfo = new MovieInfo(poster_path, title, overview, popularity, vote_average);
                 resultMovieInfoItems[i] = movieInfo;
             }
             return resultMovieInfoItems;
@@ -157,18 +197,38 @@ public class MovieFragment extends Fragment {
             // Will contain the raw JSON response as a string.
             String movieJsonStr = null;
 
+            Uri builtUri;
+
 
             try {
                 // Construct the URL for the TheMovieDatabase query
                 final String MOVIE_BASE_URL =
-                        "https://api.themoviedb.org/3/discover/movie?";
+                        "https://api.themoviedb.org/3";
                 final String SORT_BY_PARAM = "sort_by";
                 final String API_KEY_PARAM = "api_key";
+                final String PAGE_PARAM = "page";
 
-                Uri builtUri = Uri.parse(MOVIE_BASE_URL).buildUpon()
-                        .appendQueryParameter(SORT_BY_PARAM, "popularity.desc")
-                        .appendQueryParameter(API_KEY_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
-                        .build();
+                SharedPreferences sharedPrefs =
+                        PreferenceManager.getDefaultSharedPreferences(getActivity());
+                String sortOrder = sharedPrefs.getString(
+                        getString(R.string.pref_sort_order_key),
+                        getString(R.string.pref_sort_order_most_popular));
+
+                //Log.e(LOG_TAG, "sort order: " + sortOrder);
+                String sort_by = "popularity.desc";
+                if (sortOrder.equals(getString(R.string.pref_sort_order_top_rated))) {
+                    builtUri = Uri.parse(MOVIE_BASE_URL + "/movie/top_rated?").buildUpon()
+                            .appendQueryParameter(API_KEY_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
+                            .appendQueryParameter(PAGE_PARAM, params[0])
+                            .build();
+                } else {
+
+                    builtUri = Uri.parse(MOVIE_BASE_URL + "/discover/movie?").buildUpon()
+                            .appendQueryParameter(SORT_BY_PARAM, sort_by)
+                            .appendQueryParameter(API_KEY_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
+                            .appendQueryParameter(PAGE_PARAM, params[0])
+                            .build();
+                }
 
                 URL url = new URL(builtUri.toString());
 
@@ -231,12 +291,50 @@ public class MovieFragment extends Fragment {
         @Override
         protected void onPostExecute(MovieInfo[] result) {
             if (result != null) {
-                mMovieAdapter.clear();
+                //mMovieAdapter.clear();
                 for(MovieInfo movieInfoItem: result) {
                     mMovieAdapter.add(movieInfoItem);
                 }
                 // New data is back from the server. Hooray!
             }
+        }
+    }
+
+    class EndlessScrollListener implements AbsListView.OnScrollListener {
+
+        private int visibleThreshold = 5;
+        private int currentPage = 0;
+        private int previousTotal = 0;
+        private boolean loading = true;
+
+        public EndlessScrollListener() {
+        }
+        public EndlessScrollListener(int visibleThreshold) {
+            this.visibleThreshold = visibleThreshold;
+        }
+
+        @Override
+        public void onScroll(AbsListView view, int firstVisibleItem,
+                             int visibleItemCount, int totalItemCount) {
+            if (loading) {
+                if (totalItemCount > previousTotal) {
+                    loading = false;
+                    previousTotal = totalItemCount;
+                    currentPage++;
+                }
+            }
+            if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
+                // I load the next page of gigs using a background task,
+                // but you can call any function here.
+                Log.e(LOG_TAG, "Current Page: " + currentPage);
+                new FetchMovieListTask().execute(Integer.toString(currentPage + 1));
+                loading = true;
+            }
+        }
+
+        @Override
+        public void onScrollStateChanged(AbsListView view, int scrollState) {
+//            Log.e(LOG_TAG, "onScrollStateChanged called");
         }
     }
 }
