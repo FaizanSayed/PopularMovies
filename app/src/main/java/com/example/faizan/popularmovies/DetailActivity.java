@@ -1,10 +1,13 @@
 package com.example.faizan.popularmovies;
 
 import android.content.Intent;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,7 +19,20 @@ import android.widget.TextView;
 
 import com.squareup.picasso.Picasso;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 public class DetailActivity extends ActionBarActivity {
+
+    private View rootView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,56 +67,5 @@ public class DetailActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class DetailFragment extends Fragment {
-        private static final String LOG_TAG = DetailFragment.class.getSimpleName();
 
-        public DetailFragment() {
-            setHasOptionsMenu(true);
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
-            View rootView = inflater.inflate(R.layout.fragment_detail, container, false);
-            Intent intent = getActivity().getIntent();
-            if (intent != null) {
-                if (intent.hasExtra("posterPath")){
-                    String url = "http://image.tmdb.org/t/p/w185" + intent.getStringExtra("posterPath");
-                    Picasso.with(getContext()).load(url).into((ImageView)rootView.findViewById(R.id.detail_imageview));
-                }
-                if (intent.hasExtra("title")) {
-                    ((TextView)rootView.findViewById(R.id.detail_title_textview))
-                            .setText(intent.getStringExtra("title"));
-                }
-
-                if (intent.hasExtra("overview")) {
-                    ((TextView)rootView.findViewById(R.id.detail_overview_textview))
-                            .setText(intent.getStringExtra("overview"));
-                }
-
-                if (intent.hasExtra("popularity")) {
-                    ((TextView)rootView.findViewById(R.id.detail_popularity_textview))
-                            .setText("Popularity: " + Double.toString(intent.getDoubleExtra("popularity", 0)));
-                }
-
-                if (intent.hasExtra("voteAverage")) {
-                    ((TextView)rootView.findViewById(R.id.detail_vote_average_textview))
-                            .setText("Vote Average: " + intent.getDoubleExtra("voteAverage", 0));
-                }
-
-            }
-
-
-
-            return rootView;
-        }
-
-        @Override
-        public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-            inflater.inflate(R.menu.moviefragment, menu);
-        }
-    }
 }

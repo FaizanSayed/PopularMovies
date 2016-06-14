@@ -23,7 +23,6 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
 
-import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -90,6 +89,7 @@ public class MovieFragment extends Fragment {
 
         // Get a reference to the GridView, and attach the adapter to it.
         gridView = (GridView) rootView.findViewById(R.id.gridview_movies);
+        //gridView.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);
         gridView.setAdapter(mMovieAdapter);
         endlessScrollListener = new EndlessScrollListener();
         gridView.setOnScrollListener(endlessScrollListener);
@@ -103,6 +103,8 @@ public class MovieFragment extends Fragment {
                 intent.putExtra("overview", movie_item.overview);
                 intent.putExtra("popularity", movie_item.popularity);
                 intent.putExtra("voteAverage", movie_item.voteAverage);
+                intent.putExtra("releaseDate", movie_item.releaseDate);
+                intent.putExtra("id", movie_item.id);
                 startActivity(intent);
             }
         });
@@ -167,6 +169,8 @@ public class MovieFragment extends Fragment {
                 String overview;
                 double popularity;
                 double vote_average;
+                String release_date;
+                String id;
                 MovieInfo movieInfo;
 
                 // Get the JSON object representing the movie list item.
@@ -176,7 +180,9 @@ public class MovieFragment extends Fragment {
                 overview = movie_list_item.getString(TMDB_OVERVIEW);
                 popularity = movie_list_item.getDouble(TMDB_POPULARITY);
                 vote_average = movie_list_item.getDouble(TMDB_VOTE_AVERAGE);
-                movieInfo = new MovieInfo(poster_path, title, overview, popularity, vote_average);
+                release_date = movie_list_item.getString(TMDB_RELEASE_DATE);
+                id = movie_list_item.getString(TMDB_ID);
+                movieInfo = new MovieInfo(id, poster_path, title, overview, popularity, vote_average, release_date);
                 resultMovieInfoItems[i] = movieInfo;
             }
             return resultMovieInfoItems;
