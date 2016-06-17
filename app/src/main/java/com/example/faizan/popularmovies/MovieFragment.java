@@ -89,7 +89,6 @@ public class MovieFragment extends Fragment {
 
         // Get a reference to the GridView, and attach the adapter to it.
         gridView = (GridView) rootView.findViewById(R.id.gridview_movies);
-        //gridView.setStretchMode(GridView.STRETCH_COLUMN_WIDTH);
         gridView.setAdapter(mMovieAdapter);
         endlessScrollListener = new EndlessScrollListener();
         gridView.setOnScrollListener(endlessScrollListener);
@@ -160,7 +159,6 @@ public class MovieFragment extends Fragment {
             JSONObject movieJson = new JSONObject(movieJsonStr);
             JSONArray movieList = movieJson.getJSONArray(TMDB_RESULTS);
 
-            //String[] resultStrs = new String[numItems];
             MovieInfo[] resultMovieInfoItems = new MovieInfo[movieList.length()];
 
             for (int i = 0; i < movieList.length(); i++) {
@@ -190,10 +188,6 @@ public class MovieFragment extends Fragment {
 
         @Override
         protected MovieInfo[] doInBackground(String... params) {
-
-//            if (params.length == 0) {
-//                return null;
-//            }
 
             // These two need to be declared outside the try/catch
             // so that they can be closed in the finally block.
@@ -297,7 +291,6 @@ public class MovieFragment extends Fragment {
         @Override
         protected void onPostExecute(MovieInfo[] result) {
             if (result != null) {
-                //mMovieAdapter.clear();
                 for(MovieInfo movieInfoItem: result) {
                     mMovieAdapter.add(movieInfoItem);
                 }
@@ -332,7 +325,6 @@ public class MovieFragment extends Fragment {
             if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
                 // I load the next page of gigs using a background task,
                 // but you can call any function here.
-                Log.e(LOG_TAG, "Current Page: " + currentPage);
                 new FetchMovieListTask().execute(Integer.toString(currentPage + 1));
                 loading = true;
             }
@@ -340,7 +332,6 @@ public class MovieFragment extends Fragment {
 
         @Override
         public void onScrollStateChanged(AbsListView view, int scrollState) {
-//            Log.e(LOG_TAG, "onScrollStateChanged called");
         }
     }
 }
