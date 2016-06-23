@@ -29,9 +29,13 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.example.faizan.popularmovies.MainActivity" />
         </activity>
-        <activity
+            <activity
             android:name=".SettingsActivity"
             android:label="@string/title_activity_settings"></activity>
+
+        <provider
+            android:authorities="com.example.faizan.popularmovies.app"
+            android:name=".data.MovieProvider" />
     </application>
 
 </manifest>

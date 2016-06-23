@@ -13,10 +13,10 @@ import java.util.List;
 public class MovieReviewAdapter extends BaseExpandableListAdapter {
     private Context context;
     private List<String> listDataHeader;
-    private HashMap<String, List<String>> listDataChild;
+    private HashMap<String, List<MovieReviewInfo>> listDataChild;
 
     public MovieReviewAdapter(Context c, List<String> dataHeader,
-                              HashMap<String, List<String>> childData) {
+                              HashMap<String, List<MovieReviewInfo>> childData) {
         context = c;
         listDataHeader = dataHeader;
         listDataChild = childData;
@@ -35,7 +35,7 @@ public class MovieReviewAdapter extends BaseExpandableListAdapter {
     @Override
     public View getChildView(int groupPosition, int childPosition,
                              boolean isLastChild, View convertView, ViewGroup parent) {
-        final String childText = (String) getChild(groupPosition, childPosition);
+        final String childText = ((MovieReviewInfo) getChild(groupPosition, childPosition)).content;
         if (convertView == null) {
             LayoutInflater inflater = (LayoutInflater)context.getSystemService(
                                         Context.LAYOUT_INFLATER_SERVICE);

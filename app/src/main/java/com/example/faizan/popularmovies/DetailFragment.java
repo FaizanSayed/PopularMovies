@@ -1,8 +1,10 @@
 package com.example.faizan.popularmovies;
 
+import android.content.ContentUris;
+import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -11,41 +13,41 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Adapter;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
+import android.widget.BaseExpandableListAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
+import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
+import com.example.faizan.popularmovies.data.MovieContract;
 import com.squareup.picasso.Picasso;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+import java.util.Vector;
 
+import com.example.faizan.popularmovies.data.MovieContract.MovieEntry;
+import com.example.faizan.popularmovies.data.MovieContract.VideoEntry;
+import com.example.faizan.popularmovies.data.MovieContract.ReviewEntry;
 public class DetailFragment extends Fragment {
     private final String LOG_TAG = DetailFragment.class.getSimpleName();
     private MovieVideoAdapter mMovieVideoAdapter;
-    private MovieReviewAdapter mMovieReviewAdapter;
-    private List<String> authorList;
-    private HashMap<String, List<String>> reviewAuthorMap;
     private ExpandableListView expandableListView;
+    ListView movieVideoListView;
     private View rootView;
-    private String movie_id = null;
+    private String movie_id;
     private String movie_title;
+    private String movie_poster_path;
+    private String movie_overview;
+    private String movie_popularity;
+    private String movie_vote_average;
+    private String movie_release_date;
+    boolean isDataInDb = false;
     public DetailFragment() {
         setHasOptionsMenu(true);
     }
@@ -57,7 +59,8 @@ public class DetailFragment extends Fragment {
         Intent intent = getActivity().getIntent();
         if (intent != null) {
             if (intent.hasExtra("posterPath")){
-                String url = "http://image.tmdb.org/t/p/w185" + intent.getStringExtra("posterPath");
+                movie_poster_path = intent.getStringExtra("posterPath");
+                String url = "http://image.tmdb.org/t/p/w185" + movie_poster_path;
                 Picasso.with(getContext()).load(url).into((ImageView)rootView.findViewById(R.id.detail_imageview));
             }
             if (intent.hasExtra("title")) {
@@ -67,23 +70,27 @@ public class DetailFragment extends Fragment {
             }
 
             if (intent.hasExtra("overview")) {
+                movie_overview = intent.getStringExtra("overview");
                 ((TextView)rootView.findViewById(R.id.detail_overview_textview))
-                        .setText(intent.getStringExtra("overview"));
+                        .setText(movie_overview);
             }
 
             if (intent.hasExtra("popularity")) {
+                movie_popularity = Double.toString(intent.getDoubleExtra("popularity", 0));
                 ((TextView)rootView.findViewById(R.id.detail_popularity_textview))
-                        .setText(Double.toString(intent.getDoubleExtra("popularity", 0)));
+                        .setText(movie_popularity);
             }
 
             if (intent.hasExtra("voteAverage")) {
+                movie_vote_average = Double.toString(intent.getDoubleExtra("voteAverage", 0));
                 ((TextView)rootView.findViewById(R.id.detail_vote_average_textview))
-                        .setText(Double.toString(intent.getDoubleExtra("voteAverage", 0)) + "/10");
+                        .setText(movie_vote_average + "/10");
             }
 
             if (intent.hasExtra("releaseDate")) {
+                movie_release_date = intent.getStringExtra("releaseDate");
                 ((TextView)rootView.findViewById(R.id.detail_release_date_textview))
-                        .setText(intent.getStringExtra("releaseDate"));
+                        .setText(movie_release_date);
             }
 
             if (intent.hasExtra("id")) {
@@ -97,7 +104,7 @@ public class DetailFragment extends Fragment {
                         R.layout.list_item_movie_videos,
                         R.id.list_item_movie_videos_textview,
                         new ArrayList<MovieVideoInfo>());
-        ListView movieVideoListView = (ListView) rootView.findViewById(R.id.list_view_movie_videos);
+        movieVideoListView = (ListView) rootView.findViewById(R.id.list_view_movie_videos);
         movieVideoListView.setAdapter(mMovieVideoAdapter);
 
         movieVideoListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -114,15 +121,134 @@ public class DetailFragment extends Fragment {
 
         expandableListView = (ExpandableListView) rootView.findViewById(R.id.list_view_movie_reviews);
 
-        Button movieFavouriteButton = (Button)rootView.findViewById(R.id.mark_favourite_button);
-        movieFavouriteButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                Log.e(LOG_TAG, "Movie to be marked as favorite: " + movie_title);
+        final ToggleButton movieFavouriteButton = (ToggleButton)rootView.findViewById(R.id.mark_favourite_button);
+        if (movie_id == null) {
+            Log.e(LOG_TAG, "movie_id is null");
+        }
+        isDataInDb = isMovieDataInDb(movie_id);
+        Log.e(LOG_TAG, "Data for " + movie_title + " " + movie_id + " is in db: " + isDataInDb);
+        movieFavouriteButton.setChecked(isDataInDb);
+        movieFavouriteButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    Log.e(LOG_TAG, "Movie to be marked as favorite: " + movie_title);
+                    long movieDbId = addMovie(movie_id, movie_poster_path, movie_title, movie_overview, movie_popularity, movie_vote_average, movie_release_date);
+                    Log.e(LOG_TAG, "Movie info " + movie_title + " successfully added to local database with db id: " + movieDbId);
+                    Log.e(LOG_TAG, "No. of movie trailers: " + mMovieVideoAdapter.getCount());
+                    Vector<ContentValues> cVVideoVector = new Vector(mMovieVideoAdapter.getCount());
+                    for (int i = 0; i < mMovieVideoAdapter.getCount(); i++) {
+                      //Log.e(LOG_TAG, "video: " + mMovieVideoAdapter.getItem(i).name);
+                        MovieVideoInfo movieVideoInfoItem = mMovieVideoAdapter.getItem(i);
+                        ContentValues movieVideoValues = new ContentValues();
+                        movieVideoValues.put(VideoEntry.COLUMN_MOVIE_VIDEO_ID, movieVideoInfoItem.id);
+                        movieVideoValues.put(VideoEntry.COLUMN_NAME, movieVideoInfoItem.name);
+                        movieVideoValues.put(VideoEntry.COLUMN_TYPE, movieVideoInfoItem.type);
+                        movieVideoValues.put(VideoEntry.COLUMN_SITE, movieVideoInfoItem.site);
+                        movieVideoValues.put(VideoEntry.COLUMN_KEY, movieVideoInfoItem.key);
+                        movieVideoValues.put(VideoEntry.COLUMN_MOVIE_ID, movie_id);
+
+                        cVVideoVector.add(movieVideoValues);
+                    }
+
+                    int movie_video_inserted = 0;
+
+                    if (cVVideoVector.size() > 0) {
+                        ContentValues[] cvVideoArray = new ContentValues[cVVideoVector.size()];
+                        cVVideoVector.toArray(cvVideoArray);
+                        movie_video_inserted = getContext().getContentResolver().bulkInsert(VideoEntry.CONTENT_URI, cvVideoArray);
+
+                    }
+
+                    Log.e(LOG_TAG, "Movie Video information for " + movie_video_inserted + " items inserted.");
+                    MovieReviewAdapter reviewAdapter =  (MovieReviewAdapter) expandableListView.getExpandableListAdapter();
+                    Vector<ContentValues> cVReviewVector = new Vector(reviewAdapter.getGroupCount());
+                    for (int i = 0; i < reviewAdapter.getGroupCount(); i++) {
+                        //Log.e(LOG_TAG, "the review: " + reviewAdapter.getChild(i,0).toString());
+                        //Log.e(LOG_TAG, "review author: " + reviewAdapter.getGroup(i).toString());
+                        MovieReviewInfo movieReviewInfoItem = (MovieReviewInfo) reviewAdapter.getChild(i, 0);
+                        ContentValues movieReviewValues = new ContentValues();
+                        movieReviewValues.put(ReviewEntry.COLUMN_MOVIE_REVIEW_ID, movieReviewInfoItem.id);
+                        movieReviewValues.put(ReviewEntry.COLUMN_AUTHOR, movieReviewInfoItem.author);
+                        movieReviewValues.put(ReviewEntry.COLUMN_CONTENT, movieReviewInfoItem.content);
+                        movieReviewValues.put(ReviewEntry.COLUMN_URL, movieReviewInfoItem.url);
+                        movieReviewValues.put(ReviewEntry.COLUMN_MOVIE_ID, movie_id);
+
+                        cVReviewVector.add(movieReviewValues);
+                    }
+
+                    int movie_review_inserted = 0;
+
+                    if (cVReviewVector.size() > 0) {
+                        ContentValues[] cvReviewArray = new ContentValues[cVReviewVector.size()];
+                        cVReviewVector.toArray(cvReviewArray);
+                        movie_review_inserted = getContext().getContentResolver().bulkInsert(ReviewEntry.CONTENT_URI, cvReviewArray);
+
+                    }
+
+                    Log.e(LOG_TAG, "Movie Review information for " + movie_review_inserted + " items inserted.");
+                }
+
+
+                else
+                    Log.e(LOG_TAG, "Movie to be unmarked as favorite: " + movie_title);
 
             }
         });
 
         return rootView;
+    }
+
+    private boolean isMovieDataInDb(String movieId) {
+        boolean result = false;
+        Cursor movieCursor = getContext().getContentResolver().query(
+                MovieContract.MovieEntry.CONTENT_URI,
+                new String[]{MovieEntry.COLUMN_MOVIE_ID},
+                MovieEntry.COLUMN_MOVIE_ID + " = ?",
+                new String[]{movie_id},
+                null);
+
+        if (movieCursor.moveToFirst()) {
+//            int movieIdIndex = movieCursor.getColumnIndex(MovieContract.MovieEntry._ID);
+            result = true;
+        }
+        movieCursor.close();
+        return result;
+    }
+
+    long addMovie(String movie_id, String poster_path, String title, String overview, String popularity, String average, String release_date) {
+
+        long movieDbId;
+        Cursor movieCursor = getContext().getContentResolver().query(
+                MovieContract.MovieEntry.CONTENT_URI,
+                new String[]{MovieContract.MovieEntry._ID},
+                MovieEntry.COLUMN_MOVIE_ID + " = ?",
+                new String[]{movie_id},
+                null);
+
+        if (movieCursor.moveToFirst()) {
+            int movieIdIndex = movieCursor.getColumnIndex(MovieContract.MovieEntry._ID);
+            movieDbId = movieCursor.getLong(movieIdIndex);
+        } else {
+            ContentValues movieValues = new ContentValues();
+
+            movieValues.put(MovieEntry.COLUMN_MOVIE_ID, movie_id);
+            movieValues.put(MovieEntry.COLUMN_POSTER_PATH, poster_path);
+            movieValues.put(MovieEntry.COLUMN_TITLE, title);
+            movieValues.put(MovieEntry.COLUMN_OVERVIEW, overview);
+            movieValues.put(MovieEntry.COLUMN_POPULARITY, popularity);
+            movieValues.put(MovieEntry.COLUMN_VOTE_AVERAGE, average);
+            movieValues.put(MovieEntry.COLUMN_RELEASE_DATE, release_date);
+
+            Uri insertedUri = getContext().getContentResolver().insert(
+                    MovieContract.MovieEntry.CONTENT_URI,
+                    movieValues
+            );
+
+            movieDbId = ContentUris.parseId(insertedUri);
+        }
+        movieCursor.close();
+
+        return movieDbId;
     }
 
     @Override
@@ -132,19 +258,19 @@ public class DetailFragment extends Fragment {
 
     private void updateMovieVideoList() {
         if (movie_id != null){
-            FetchMovieVideosTask movieVideosTask = new FetchMovieVideosTask();
+            FetchMovieVideosTask movieVideosTask = new FetchMovieVideosTask(getActivity(), mMovieVideoAdapter);
             movieVideosTask.execute(movie_id);
+//            setListViewHeightBasedOnChildren(movieVideoListView);
         }
 
     }
 
     private void updateMovieReviewList() {
         if (movie_id != null) {
-            authorList = new ArrayList<String>();
-            reviewAuthorMap = new HashMap<String, List<String>>();
-            FetchMovieReviewTask movieReviewTask = new FetchMovieReviewTask();
+            FetchMovieReviewsTask movieReviewTask = new FetchMovieReviewsTask(getActivity(), expandableListView);
             Log.e(LOG_TAG, "Executing fetchreviewtask");
             movieReviewTask.execute(movie_id);
+//            setListViewHeightBasedOnChildren(expandableListView);
         }
     }
 
@@ -155,240 +281,27 @@ public class DetailFragment extends Fragment {
         updateMovieReviewList();
     }
 
-    public class FetchMovieVideosTask extends AsyncTask<String, Void, MovieVideoInfo[]> {
-        private final String LOG_TAG = FetchMovieVideosTask.class.getSimpleName();
+//    public static void setListViewHeightBasedOnChildren(ListView listView) {
+//        Log.e("setListView", "inside setListViewHeightBasedOnChildren");
+//        ListAdapter listAdapter = listView.getAdapter();
+//        if (listAdapter == null) {
+//            // pre-condition
+//            return;
+//        }
+//
+//        int totalHeight = 0;
+//        for (int i = 0; i < listAdapter.getCount(); i++) {
+//            View listItem = listAdapter.getView(i, null, listView);
+//            listItem.measure(0, 0);
+//            totalHeight += listItem.getMeasuredHeight();
+//        }
+//
+//        ViewGroup.LayoutParams params = listView.getLayoutParams();
+//        params.height = totalHeight + (listView.getDividerHeight() * (listAdapter.getCount() - 1));
+//        Log.e("setListView", "height of listview: " + params.height);
+//        listView.setLayoutParams(params);
+//        listView.requestLayout();
+//    }
 
-        private MovieVideoInfo[] getMovieVideoDataFromJson(String movieVideoJsonStr)
-                throws JSONException {
-            String TMDB_MOVIE_VIDEO_ID = "id";
-            String TMDB_MOVIE_VIDEO_RESULTS = "results";
-            String TMDB_MOVIE_VIDEO_KEY = "key";
-            String TMDB_MOVIE_VIDEO_NAME = "name";
-            String TMDB_MOVIE_VIDEO_SITE = "site";
-            String TMDB_MOVIE_VIDEO_TYPE = "type";
-
-            JSONObject movieVideoJson = new JSONObject(movieVideoJsonStr);
-            JSONArray movieVideosList = movieVideoJson.getJSONArray(TMDB_MOVIE_VIDEO_RESULTS);
-
-            MovieVideoInfo[] resultMovieVideoItems = new MovieVideoInfo[movieVideosList.length()];
-            for (int i = 0; i < movieVideosList.length(); i++) {
-                String key;
-                String name;
-                String site;
-                String type;
-
-                JSONObject movieVideoListItem = movieVideosList.getJSONObject(i);
-                key = movieVideoListItem.getString(TMDB_MOVIE_VIDEO_KEY);
-                name = movieVideoListItem.getString(TMDB_MOVIE_VIDEO_NAME);
-                site = movieVideoListItem.getString(TMDB_MOVIE_VIDEO_SITE);
-                type = movieVideoListItem.getString(TMDB_MOVIE_VIDEO_TYPE);
-                resultMovieVideoItems[i] = new MovieVideoInfo(key, name, site, type);
-            }
-
-            return resultMovieVideoItems;
-        }
-
-        @Override
-        protected MovieVideoInfo[] doInBackground(String... params) {
-
-            if (params.length == 0) {
-                return null;
-            }
-
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-
-            String movieVideoJsonStr = null;
-
-            Uri builtUri;
-
-            try {
-                final String MOVIE_VIDEO_BASE_URL =
-                        "https://api.themoviedb.org/3/movie/" + params[0] + "/videos";
-                final String API_KEY_PARAM = "api_key";
-
-                builtUri = Uri.parse(MOVIE_VIDEO_BASE_URL).buildUpon()
-                        .appendQueryParameter(API_KEY_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
-                        .build();
-
-                URL url = new URL(builtUri.toString());
-
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");;
-                urlConnection.connect();
-
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                while((line = reader.readLine()) != null) {
-                    buffer.append(line + "\n");
-                }
-
-                if (buffer.length() == 0) {
-                    return null;
-                }
-
-                movieVideoJsonStr = buffer.toString();
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "Error ", e);
-
-                return null;
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch(final IOException e) {
-                        Log.e(LOG_TAG, "Error closing stream", e);
-                    }
-                }
-            }
-
-            try {
-                return getMovieVideoDataFromJson(movieVideoJsonStr);
-            } catch (JSONException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(MovieVideoInfo[] result) {
-            if (result != null) {
-                mMovieVideoAdapter.clear();
-                for(MovieVideoInfo movieVideoItem : result) {
-                    mMovieVideoAdapter.add(movieVideoItem);
-                }
-            }
-        }
-    }
-
-    public class FetchMovieReviewTask extends AsyncTask<String, Void, MovieReviewInfo[]> {
-        private final String LOG_TAG = FetchMovieReviewTask.class.getSimpleName();
-
-        private MovieReviewInfo[] getMovieReviewDataFromJson(String movieReviewJsonStr)
-                throws JSONException {
-            String TMDB_MOVIE_REVIEW_ID = "id";
-            String TMDB_MOVIE_REVIEW_RESULTS = "results";
-            String TMDB_MOVIE_REVIEW_AUTHOR = "author";
-            String TMDB_MOVIE_REVIEW_CONTENT = "content";
-            String TMDB_MOVIE_REVIEW_URL = "url";
-
-            JSONObject movieReviewJson = new JSONObject(movieReviewJsonStr);
-            JSONArray movieReviewsList = movieReviewJson.getJSONArray(TMDB_MOVIE_REVIEW_RESULTS);
-
-            MovieReviewInfo[] resultMovieReviewItems = new MovieReviewInfo[movieReviewsList.length()];
-            for (int i = 0; i < movieReviewsList.length(); i++) {
-                String id;
-                String author;
-                String content;
-                String url;
-
-                JSONObject movieReviewListItem = movieReviewsList.getJSONObject(i);
-                id = movieReviewListItem.getString(TMDB_MOVIE_REVIEW_ID);
-                author = movieReviewListItem.getString(TMDB_MOVIE_REVIEW_AUTHOR);
-                content = movieReviewListItem.getString(TMDB_MOVIE_REVIEW_CONTENT);
-                url = movieReviewListItem.getString(TMDB_MOVIE_REVIEW_URL);
-                resultMovieReviewItems[i] = new MovieReviewInfo(id, author, content, url);
-            }
-
-            return resultMovieReviewItems;
-        }
-
-        @Override
-        protected MovieReviewInfo[] doInBackground(String... params) {
-
-            if (params.length == 0) {
-                return null;
-            }
-
-            HttpURLConnection urlConnection = null;
-            BufferedReader reader = null;
-
-            String movieReviewJsonStr = null;
-
-            Uri builtUri;
-
-            try {
-                final String MOVIE_REVIEW_BASE_URL =
-                        "https://api.themoviedb.org/3/movie/" + params[0] + "/reviews";
-                final String API_KEY_PARAM = "api_key";
-
-                builtUri = Uri.parse(MOVIE_REVIEW_BASE_URL).buildUpon()
-                        .appendQueryParameter(API_KEY_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
-                        .build();
-
-                URL url = new URL(builtUri.toString());
-
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");;
-                urlConnection.connect();
-
-                InputStream inputStream = urlConnection.getInputStream();
-                StringBuffer buffer = new StringBuffer();
-                if (inputStream == null) {
-                    return null;
-                }
-                reader = new BufferedReader(new InputStreamReader(inputStream));
-
-                String line;
-                while((line = reader.readLine()) != null) {
-                    buffer.append(line + "\n");
-                }
-
-                if (buffer.length() == 0) {
-                    return null;
-                }
-
-                movieReviewJsonStr = buffer.toString();
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "Error ", e);
-
-                return null;
-            } finally {
-                if (urlConnection != null) {
-                    urlConnection.disconnect();
-                }
-                if (reader != null) {
-                    try {
-                        reader.close();
-                    } catch(final IOException e) {
-                        Log.e(LOG_TAG, "Error closing stream", e);
-                    }
-                }
-            }
-
-            try {
-                return getMovieReviewDataFromJson(movieReviewJsonStr);
-            } catch (JSONException e) {
-                Log.e(LOG_TAG, e.getMessage(), e);
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(MovieReviewInfo[] result) {
-            if (result != null) {
-                for(MovieReviewInfo movieReviewItem : result) {
-                    authorList.add(movieReviewItem.author);
-                    List<String> content = new ArrayList<String>();
-                    content.add(movieReviewItem.content);
-                    reviewAuthorMap.put(movieReviewItem.author, content);
-                    Log.e(LOG_TAG, movieReviewItem.author);
-                }
-                mMovieReviewAdapter = new MovieReviewAdapter(getContext(), authorList, reviewAuthorMap);
-                expandableListView.setAdapter(mMovieReviewAdapter);
-            }
-        }
-    }
 }
 

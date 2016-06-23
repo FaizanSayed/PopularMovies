@@ -6,138 +6,134 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical" >
-        <!--<HorizontalScrollView-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="336dp">-->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="240dp"
-                android:orientation="horizontal"
-                >
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:layout_weight="1">
-                    <ImageView
-                        android:layout_width="match_parent"
-                        android:layout_height="200dp"
-                        android:id="@+id/detail_imageview"
-                        android:layout_gravity="center_horizontal"
-                        />
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:layout_weight="1">
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="200dp"
+                    android:id="@+id/detail_imageview"
+                    android:layout_gravity="center_horizontal" />
 
-                    <TextView
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="Title"
+                    android:id="@+id/detail_title_textview"
+                    android:gravity="center_horizontal"
+                    android:layout_gravity="center_horizontal" />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:layout_weight="1">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Popularity"
+                    android:id="@+id/detail_popularity_textview"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|center_horizontal" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Vote Average"
+                    android:id="@+id/detail_vote_average_textview"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:gravity="center_vertical|center_horizontal" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Release Date"
+                    android:id="@+id/detail_release_date_textview"
+                    android:layout_gravity="center_horizontal"
+                    android:gravity="center_vertical|center_horizontal"
+                    android:layout_weight="1" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="8"
+                    android:gravity="center_vertical|center_horizontal">
+                    <!--<Button-->
+                        <!--android:layout_width="wrap_content"-->
+                        <!--android:layout_height="wrap_content"-->
+                        <!--android:text="Mark as Favourite"-->
+                        <!--android:id="@+id/mark_favourite_button"-->
+                        <!--android:layout_gravity="center_vertical"-->
+                        <!--android:gravity="center_vertical|center_horizontal" />-->
+
+                    <ToggleButton
                         android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:text="Title"
-                        android:id="@+id/detail_title_textview"
-                        android:gravity="center_horizontal"
-                        android:layout_gravity="center_horizontal" />
-                </LinearLayout>
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:orientation="vertical"
-                    android:layout_weight="1">
-
-                    <TextView
-                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Popularity"
-                        android:id="@+id/detail_popularity_textview"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_weight="1"
-                        android:gravity="center_vertical|center_horizontal" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Vote Average"
-                        android:id="@+id/detail_vote_average_textview"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_weight="1"
-                        android:gravity="center_vertical|center_horizontal" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="Release Date"
-                        android:id="@+id/detail_release_date_textview"
-                        android:layout_gravity="center_horizontal"
-                        android:gravity="center_vertical|center_horizontal"
-                        android:layout_weight="1" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="8"
-                        android:gravity="center_vertical|center_horizontal">
-                        <Button
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Mark as Favourite"
-                            android:id="@+id/mark_favourite_button"
-                            android:layout_gravity="center_vertical"
-                            android:gravity="center_vertical|center_horizontal" />
-                    </LinearLayout>
-
-                    <!--<TextView-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:text="New Text"-->
-                    <!--android:id="@+id/detail_id_textview"-->
-                    <!--android:layout_gravity="center_horizontal" />-->
+                        android:text="Mark as Favourite"
+                        android:id="@+id/mark_favourite_button"
+                        android:textOff="Mark as Favourite"
+                        android:textOn="Unmark as favourite" />
                 </LinearLayout>
             </LinearLayout>
-        <!--</HorizontalScrollView>-->
+        </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="match_parent"
             android:text="Movie Overview"
             android:id="@+id/detail_overview_textview"
             android:layout_gravity="center_horizontal"
             android:gravity="center_horizontal" />
+
         <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="450dp"
+        android:layout_height="400dp"
         android:orientation="vertical"
         android:minHeight="?android:attr/listPreferredItemHeight">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="50dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="Trailers"
                 android:id="@+id/textView"
                 android:layout_gravity="center_horizontal"
-                android:gravity="center_vertical" />
+                android:gravity="center_vertical|center_horizontal" />
 
             <ListView
                 android:id="@+id/list_view_movie_videos"
                 android:layout_width="match_parent"
-                android:layout_height="400dp"
+                android:layout_height="wrap_content"
                 android:minHeight="?android:listPreferredItemHeight" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="450dp"
+            android:layout_height="400dp"
             android:orientation="vertical">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="50dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="Reviews"
                 android:id="@+id/textView2"
                 android:layout_gravity="center_horizontal"
-                android:gravity="center_vertical" />
+                android:gravity="center_vertical|center_horizontal" />
 
             <ExpandableListView
                 android:id="@+id/list_view_movie_reviews"
                 android:layout_width="match_parent"
-                android:layout_height="400dp" />
+                android:layout_height="wrap_content" />
         </LinearLayout>
 
     </LinearLayout>

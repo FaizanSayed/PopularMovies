@@ -1,7 +1,6 @@
 package com.example.faizan.popularmovies;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -11,10 +10,10 @@ import com.squareup.picasso.Picasso;
 
 import java.util.List;
 
-public class ImageAdapter extends ArrayAdapter<MovieInfo> {
-    private final String LOG_TAG = ImageAdapter.class.getSimpleName();
+public class MovieInfoAdapter extends ArrayAdapter<MovieInfo> {
+    private final String LOG_TAG = MovieInfoAdapter.class.getSimpleName();
 
-    public ImageAdapter(Context context, int resource, int textViewResourceId, List<MovieInfo> objects) {
+    public MovieInfoAdapter(Context context, int resource, int textViewResourceId, List<MovieInfo> objects) {
         super(context, resource, textViewResourceId, objects);
     }
 
