@@ -189,8 +189,22 @@ public class DetailFragment extends Fragment {
                 }
 
 
-                else
+                else {
                     Log.e(LOG_TAG, "Movie to be unmarked as favorite: " + movie_title);
+                    int rowsDeleted;
+                    rowsDeleted = getContext().getContentResolver().delete(MovieEntry.CONTENT_URI,
+                            MovieEntry.COLUMN_MOVIE_ID + " = ?",
+                            new String[]{movie_id});
+                    Log.e(LOG_TAG, "No. of rows from movie table deleted: " + rowsDeleted);
+                    rowsDeleted = getContext().getContentResolver().delete(VideoEntry.CONTENT_URI,
+                            VideoEntry.COLUMN_MOVIE_ID + " = ?",
+                            new String[]{movie_id});
+                    Log.e(LOG_TAG, "No. of rows from video table deleted: " + rowsDeleted);
+                    rowsDeleted = getContext().getContentResolver().delete(ReviewEntry.CONTENT_URI,
+                            ReviewEntry.COLUMN_MOVIE_ID + " = ?",
+                            new String[]{movie_id});
+                    Log.e(LOG_TAG, "No. of rows from review table deleted: " + rowsDeleted);
+                }
 
             }
         });
