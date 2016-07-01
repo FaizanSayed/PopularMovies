@@ -4,6 +4,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.database.Cursor;
+import android.database.DataSetObserver;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -13,30 +14,30 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Adapter;
 import android.widget.AdapterView;
-import android.widget.BaseExpandableListAdapter;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ExpandableListView;
 import android.widget.ImageView;
-import android.widget.ListAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.ToggleButton;
 
-import com.example.faizan.popularmovies.data.MovieContract;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
 
 import com.example.faizan.popularmovies.data.MovieContract.MovieEntry;
 import com.example.faizan.popularmovies.data.MovieContract.VideoEntry;
 import com.example.faizan.popularmovies.data.MovieContract.ReviewEntry;
+
 public class DetailFragment extends Fragment {
     private final String LOG_TAG = DetailFragment.class.getSimpleName();
     private MovieVideoAdapter mMovieVideoAdapter;
+    private MovieReviewAdapter mMovieReviewAdapter;
     private ExpandableListView expandableListView;
     ListView movieVideoListView;
     private View rootView;
@@ -99,42 +100,113 @@ public class DetailFragment extends Fragment {
 
         }
 
+
+
         mMovieVideoAdapter =
                 new MovieVideoAdapter(getActivity(),
                         R.layout.list_item_movie_videos,
                         R.id.list_item_movie_videos_textview,
                         new ArrayList<MovieVideoInfo>());
-        movieVideoListView = (ListView) rootView.findViewById(R.id.list_view_movie_videos);
-        movieVideoListView.setAdapter(mMovieVideoAdapter);
 
-        movieVideoListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+//        movieVideoListView = (ListView) rootView.findViewById(R.id.list_view_movie_videos);
+//        movieVideoListView.setAdapter(mMovieVideoAdapter);
+//
+//        movieVideoListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+//                String url = "https://www.youtube.com/watch?v=" + mMovieVideoAdapter.getItem(position).key;
+//                Uri uri = Uri.parse(url);
+//                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+//                if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
+//                    startActivity(intent);
+//                }
+//            }
+//        });
+
+        final LinearLayout movieVideoLinearLayout = (LinearLayout) rootView.findViewById(R.id.movie_video_detail_linear_layout);
+        final TextView trailerTitleTextView = (TextView) rootView.findViewById(R.id.trailer_title_textview);
+
+
+        mMovieVideoAdapter.registerDataSetObserver(new DataSetObserver() {
             @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String url = "https://www.youtube.com/watch?v=" + mMovieVideoAdapter.getItem(position).key;
-                Uri uri = Uri.parse(url);
-                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-                if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
-                    startActivity(intent);
+            public void onChanged() {
+//                super.onChanged();
+                movieVideoLinearLayout.removeAllViews();
+                movieVideoLinearLayout.addView(trailerTitleTextView);
+                int adapterCount = mMovieVideoAdapter.getCount();
+                for (int i = 0; i < adapterCount; i++) {
+                    final View item =  mMovieVideoAdapter.getView(i, null, null);
+                    item.setId(i);
+                    item.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            String url = "https://www.youtube.com/watch?v=" + mMovieVideoAdapter.getItem(item.getId()).key;
+                            Uri uri = Uri.parse(url);
+                            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                            if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
+                                startActivity(intent);
+                            }
+                        }
+                    });
+
+                    //Log.e(LOG_TAG,"View text: " + item.getText().toString());
+                    movieVideoLinearLayout.addView(item);
+                }
+
+            }
+        });
+
+        mMovieReviewAdapter = new MovieReviewAdapter(getContext(), new ArrayList<String>(), new HashMap<String, List<MovieReviewInfo>>());
+
+//        expandableListView = (ExpandableListView) rootView.findViewById(R.id.list_view_movie_reviews);
+//        expandableListView.setAdapter(mMovieReviewAdapter);
+
+        final LinearLayout movieReviewLinearLayout = (LinearLayout) rootView.findViewById(R.id.movie_review_detail_linear_layout);
+        final TextView reviewTitleTextView = (TextView) rootView.findViewById(R.id.review_title_textview);
+
+        mMovieReviewAdapter.registerDataSetObserver(new DataSetObserver() {
+            @Override
+            public void onChanged() {
+//                super.onChanged();
+                movieReviewLinearLayout.removeAllViews();
+                movieReviewLinearLayout.addView(reviewTitleTextView);
+                int adapterGroupCount = mMovieReviewAdapter.getGroupCount();
+//                Log.e(LOG_TAG,"Group Adapter Count: " + adapterGroupCount);
+                for (int i = 0; i < adapterGroupCount; i++) {
+                    final TextView item =  (TextView) mMovieReviewAdapter.getGroupView(i, false, null, null);
+                    LinearLayout item_parent = (LinearLayout) item.getParent();
+                    item.setId(i);
+                    item.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            MovieReviewInfo reviewItem = (MovieReviewInfo) mMovieReviewAdapter.getChild(item.getId(), 0);
+                            if (item.getText().equals(reviewItem.author)){
+                                item.setText(reviewItem.author + "\n" + reviewItem.content);
+                            } else {
+                                item.setText(reviewItem.author);
+                            }
+                        }
+                    });
+
+                    movieReviewLinearLayout.addView(item_parent);
                 }
             }
         });
 
-        expandableListView = (ExpandableListView) rootView.findViewById(R.id.list_view_movie_reviews);
+
 
         final ToggleButton movieFavouriteButton = (ToggleButton)rootView.findViewById(R.id.mark_favourite_button);
-        if (movie_id == null) {
-            Log.e(LOG_TAG, "movie_id is null");
-        }
         isDataInDb = isMovieDataInDb(movie_id);
-        Log.e(LOG_TAG, "Data for " + movie_title + " " + movie_id + " is in db: " + isDataInDb);
+//        Log.e(LOG_TAG, "Data for " + movie_title + " " + movie_id + " is in db: " + isDataInDb);
         movieFavouriteButton.setChecked(isDataInDb);
         movieFavouriteButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    Log.e(LOG_TAG, "Movie to be marked as favorite: " + movie_title);
+//                    Log.e(LOG_TAG, "Movie to be marked as favorite: " + movie_title);
                     long movieDbId = addMovie(movie_id, movie_poster_path, movie_title, movie_overview, movie_popularity, movie_vote_average, movie_release_date);
-                    Log.e(LOG_TAG, "Movie info " + movie_title + " successfully added to local database with db id: " + movieDbId);
-                    Log.e(LOG_TAG, "No. of movie trailers: " + mMovieVideoAdapter.getCount());
+//                    Log.e(LOG_TAG, "Movie info " + movie_title + " successfully added to local database with db id: " + movieDbId);
+//                    Log.e(LOG_TAG, "No. of movie trailers: " + mMovieVideoAdapter.getCount());
                     Vector<ContentValues> cVVideoVector = new Vector(mMovieVideoAdapter.getCount());
                     for (int i = 0; i < mMovieVideoAdapter.getCount(); i++) {
                       //Log.e(LOG_TAG, "video: " + mMovieVideoAdapter.getItem(i).name);
@@ -159,13 +231,12 @@ public class DetailFragment extends Fragment {
 
                     }
 
-                    Log.e(LOG_TAG, "Movie Video information for " + movie_video_inserted + " items inserted.");
-                    MovieReviewAdapter reviewAdapter =  (MovieReviewAdapter) expandableListView.getExpandableListAdapter();
-                    Vector<ContentValues> cVReviewVector = new Vector(reviewAdapter.getGroupCount());
-                    for (int i = 0; i < reviewAdapter.getGroupCount(); i++) {
+//                    Log.e(LOG_TAG, "Movie Video information for " + movie_video_inserted + " items inserted.");
+                    Vector<ContentValues> cVReviewVector = new Vector(mMovieReviewAdapter.getGroupCount());
+                    for (int i = 0; i < mMovieReviewAdapter.getGroupCount(); i++) {
                         //Log.e(LOG_TAG, "the review: " + reviewAdapter.getChild(i,0).toString());
                         //Log.e(LOG_TAG, "review author: " + reviewAdapter.getGroup(i).toString());
-                        MovieReviewInfo movieReviewInfoItem = (MovieReviewInfo) reviewAdapter.getChild(i, 0);
+                        MovieReviewInfo movieReviewInfoItem = (MovieReviewInfo) mMovieReviewAdapter.getChild(i, 0);
                         ContentValues movieReviewValues = new ContentValues();
                         movieReviewValues.put(ReviewEntry.COLUMN_MOVIE_REVIEW_ID, movieReviewInfoItem.id);
                         movieReviewValues.put(ReviewEntry.COLUMN_AUTHOR, movieReviewInfoItem.author);
@@ -185,25 +256,25 @@ public class DetailFragment extends Fragment {
 
                     }
 
-                    Log.e(LOG_TAG, "Movie Review information for " + movie_review_inserted + " items inserted.");
+//                    Log.e(LOG_TAG, "Movie Review information for " + movie_review_inserted + " items inserted.");
                 }
 
 
                 else {
-                    Log.e(LOG_TAG, "Movie to be unmarked as favorite: " + movie_title);
+//                    Log.e(LOG_TAG, "Movie to be unmarked as favorite: " + movie_title);
                     int rowsDeleted;
                     rowsDeleted = getContext().getContentResolver().delete(MovieEntry.CONTENT_URI,
                             MovieEntry.COLUMN_MOVIE_ID + " = ?",
                             new String[]{movie_id});
-                    Log.e(LOG_TAG, "No. of rows from movie table deleted: " + rowsDeleted);
+//                    Log.e(LOG_TAG, "No. of rows from movie table deleted: " + rowsDeleted);
                     rowsDeleted = getContext().getContentResolver().delete(VideoEntry.CONTENT_URI,
                             VideoEntry.COLUMN_MOVIE_ID + " = ?",
                             new String[]{movie_id});
-                    Log.e(LOG_TAG, "No. of rows from video table deleted: " + rowsDeleted);
+//                    Log.e(LOG_TAG, "No. of rows from video table deleted: " + rowsDeleted);
                     rowsDeleted = getContext().getContentResolver().delete(ReviewEntry.CONTENT_URI,
                             ReviewEntry.COLUMN_MOVIE_ID + " = ?",
                             new String[]{movie_id});
-                    Log.e(LOG_TAG, "No. of rows from review table deleted: " + rowsDeleted);
+//                    Log.e(LOG_TAG, "No. of rows from review table deleted: " + rowsDeleted);
                 }
 
             }
@@ -212,17 +283,18 @@ public class DetailFragment extends Fragment {
         return rootView;
     }
 
+
+
     private boolean isMovieDataInDb(String movieId) {
         boolean result = false;
         Cursor movieCursor = getContext().getContentResolver().query(
-                MovieContract.MovieEntry.CONTENT_URI,
+                MovieEntry.CONTENT_URI,
                 new String[]{MovieEntry.COLUMN_MOVIE_ID},
                 MovieEntry.COLUMN_MOVIE_ID + " = ?",
                 new String[]{movie_id},
                 null);
 
         if (movieCursor.moveToFirst()) {
-//            int movieIdIndex = movieCursor.getColumnIndex(MovieContract.MovieEntry._ID);
             result = true;
         }
         movieCursor.close();
@@ -233,14 +305,14 @@ public class DetailFragment extends Fragment {
 
         long movieDbId;
         Cursor movieCursor = getContext().getContentResolver().query(
-                MovieContract.MovieEntry.CONTENT_URI,
-                new String[]{MovieContract.MovieEntry._ID},
+                MovieEntry.CONTENT_URI,
+                new String[]{MovieEntry._ID},
                 MovieEntry.COLUMN_MOVIE_ID + " = ?",
                 new String[]{movie_id},
                 null);
 
         if (movieCursor.moveToFirst()) {
-            int movieIdIndex = movieCursor.getColumnIndex(MovieContract.MovieEntry._ID);
+            int movieIdIndex = movieCursor.getColumnIndex(MovieEntry._ID);
             movieDbId = movieCursor.getLong(movieIdIndex);
         } else {
             ContentValues movieValues = new ContentValues();
@@ -254,7 +326,7 @@ public class DetailFragment extends Fragment {
             movieValues.put(MovieEntry.COLUMN_RELEASE_DATE, release_date);
 
             Uri insertedUri = getContext().getContentResolver().insert(
-                    MovieContract.MovieEntry.CONTENT_URI,
+                    MovieEntry.CONTENT_URI,
                     movieValues
             );
 
@@ -281,8 +353,8 @@ public class DetailFragment extends Fragment {
 
     private void updateMovieReviewList() {
         if (movie_id != null) {
-            FetchMovieReviewsTask movieReviewTask = new FetchMovieReviewsTask(getActivity(), expandableListView);
-            Log.e(LOG_TAG, "Executing fetchreviewtask");
+            FetchMovieReviewsTask movieReviewTask = new FetchMovieReviewsTask(getActivity(), mMovieReviewAdapter);
+//            Log.e(LOG_TAG, "Executing fetchreviewtask");
             movieReviewTask.execute(movie_id);
 //            setListViewHeightBasedOnChildren(expandableListView);
         }

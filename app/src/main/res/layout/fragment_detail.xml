@@ -67,13 +67,6 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="8"
                     android:gravity="center_vertical|center_horizontal">
-                    <!--<Button-->
-                        <!--android:layout_width="wrap_content"-->
-                        <!--android:layout_height="wrap_content"-->
-                        <!--android:text="Mark as Favourite"-->
-                        <!--android:id="@+id/mark_favourite_button"-->
-                        <!--android:layout_gravity="center_vertical"-->
-                        <!--android:gravity="center_vertical|center_horizontal" />-->
 
                     <ToggleButton
                         android:layout_width="wrap_content"
@@ -82,6 +75,7 @@
                         android:id="@+id/mark_favourite_button"
                         android:textOff="Mark as Favourite"
                         android:textOn="Unmark as favourite" />
+
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
@@ -95,46 +89,90 @@
             android:gravity="center_horizontal" />
 
         <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="400dp"
-        android:orientation="vertical"
-        android:minHeight="?android:attr/listPreferredItemHeight">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:id="@+id/movie_video_detail_linear_layout"
+            android:minHeight="?android:attr/listPreferredItemHeight">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="Trailers"
-                android:id="@+id/textView"
+                android:id="@+id/trailer_title_textview"
                 android:layout_gravity="center_horizontal"
                 android:gravity="center_vertical|center_horizontal" />
 
-            <ListView
-                android:id="@+id/list_view_movie_videos"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="?android:listPreferredItemHeight" />
+            <!--<ListView-->
+                <!--android:id="@+id/list_view_movie_videos"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:minHeight="?android:listPreferredItemHeight" />-->
         </LinearLayout>
+
+        <!--<LinearLayout-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="400dp"-->
+        <!--android:orientation="vertical"-->
+        <!--android:minHeight="?android:attr/listPreferredItemHeight">-->
+
+            <!--<TextView-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:textAppearance="?android:attr/textAppearanceLarge"-->
+                <!--android:text="Trailers"-->
+                <!--android:id="@+id/trailer_title_textview"-->
+                <!--android:layout_gravity="center_horizontal"-->
+                <!--android:gravity="center_vertical|center_horizontal" />-->
+
+            <!--<ListView-->
+                <!--android:id="@+id/list_view_movie_videos"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:minHeight="?android:listPreferredItemHeight" />-->
+        <!--</LinearLayout>-->
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="400dp"
-            android:orientation="vertical">
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:id="@+id/movie_review_detail_linear_layout"
+            android:minHeight="?android:attr/listPreferredItemHeight" >
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
                 android:text="Reviews"
-                android:id="@+id/textView2"
+                android:id="@+id/review_title_textview"
                 android:layout_gravity="center_horizontal"
                 android:gravity="center_vertical|center_horizontal" />
 
-            <ExpandableListView
-                android:id="@+id/list_view_movie_reviews"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+            <!--<ExpandableListView-->
+                <!--android:id="@+id/list_view_movie_reviews"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content" />-->
         </LinearLayout>
+        <!--<LinearLayout-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="400dp"-->
+            <!--android:orientation="vertical">-->
+
+            <!--<TextView-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:textAppearance="?android:attr/textAppearanceLarge"-->
+                <!--android:text="Reviews"-->
+                <!--android:id="@+id/textView2"-->
+                <!--android:layout_gravity="center_horizontal"-->
+                <!--android:gravity="center_vertical|center_horizontal" />-->
+
+            <!--<ExpandableListView-->
+                <!--android:id="@+id/list_view_movie_reviews"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="wrap_content" />-->
+        <!--</LinearLayout>-->
 
     </LinearLayout>
 </ScrollView>

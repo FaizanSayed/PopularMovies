@@ -25,15 +25,10 @@ public class FetchMovieReviewsTask extends AsyncTask<String, Void, MovieReviewIn
     private final Context mContext;
 
     private MovieReviewAdapter mMovieReviewAdapter;
-    private List<String> authorList;
-    private HashMap<String, List<MovieReviewInfo>> reviewAuthorMap;
-    private ExpandableListView expandableListView;
 
-    public FetchMovieReviewsTask(Context context, ExpandableListView listView) {
+    public FetchMovieReviewsTask(Context context, MovieReviewAdapter adapter) {
         mContext = context;
-        expandableListView = listView;
-        authorList = new ArrayList();
-        reviewAuthorMap = new HashMap();
+        mMovieReviewAdapter = adapter;
     }
 
     private MovieReviewInfo[] getMovieReviewDataFromJson(String movieReviewJsonStr)
@@ -141,14 +136,8 @@ public class FetchMovieReviewsTask extends AsyncTask<String, Void, MovieReviewIn
     protected void onPostExecute(MovieReviewInfo[] result) {
         if (result != null) {
             for(MovieReviewInfo movieReviewItem : result) {
-                authorList.add(movieReviewItem.author);
-                List<MovieReviewInfo> content = new ArrayList();
-                content.add(movieReviewItem);
-                reviewAuthorMap.put(movieReviewItem.author, content);
-                Log.e(LOG_TAG, movieReviewItem.author);
+                mMovieReviewAdapter.add(movieReviewItem);
             }
-            mMovieReviewAdapter = new MovieReviewAdapter(mContext, authorList, reviewAuthorMap);
-            expandableListView.setAdapter(mMovieReviewAdapter);
 //                setListViewHeightBasedOnChildren(expandableListView);
 
         }

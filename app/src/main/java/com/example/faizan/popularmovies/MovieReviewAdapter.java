@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -20,6 +21,14 @@ public class MovieReviewAdapter extends BaseExpandableListAdapter {
         context = c;
         listDataHeader = dataHeader;
         listDataChild = childData;
+    }
+
+    public void add(MovieReviewInfo element) {
+        listDataHeader.add(element.author);
+        List<MovieReviewInfo> content = new ArrayList();
+        content.add(element);
+        listDataChild.put(element.author, content);
+        notifyDataSetChanged();
     }
 
     @Override
@@ -45,7 +54,7 @@ public class MovieReviewAdapter extends BaseExpandableListAdapter {
         TextView listChildTextView = (TextView) convertView.findViewById(
                                             R.id.list_item_movie_reviews_child_textview);
         listChildTextView.setText(childText);
-        return convertView;
+        return listChildTextView;
     }
 
     @Override
@@ -81,7 +90,7 @@ public class MovieReviewAdapter extends BaseExpandableListAdapter {
         TextView listHeaderTextView = (TextView) convertView.findViewById(
                                         R.id.list_item_movie_reviews_parent_textview);
         listHeaderTextView.setText(headerTitle);
-        return convertView;
+        return listHeaderTextView;
     }
 
     @Override

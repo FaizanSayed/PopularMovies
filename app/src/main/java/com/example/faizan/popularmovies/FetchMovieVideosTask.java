@@ -138,6 +138,7 @@ public class FetchMovieVideosTask extends AsyncTask<String, Void, MovieVideoInfo
                 mMovieVideoAdapter.add(movieVideoItem);
             }
             //setListViewHeightBasedOnChildren(movieVideoListView);
+
         }
     }
 }
