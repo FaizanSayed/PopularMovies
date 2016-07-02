@@ -9,7 +9,6 @@ import android.widget.TextView;
 import java.util.List;
 
 public class MovieVideoAdapter extends ArrayAdapter<MovieVideoInfo> {
-    private final String LOG_TAG = MovieVideoAdapter.class.getSimpleName();
 
     public MovieVideoAdapter(Context context, int resource, int textViewResourceId, List<MovieVideoInfo> objects) {
         super(context, resource, textViewResourceId, objects);

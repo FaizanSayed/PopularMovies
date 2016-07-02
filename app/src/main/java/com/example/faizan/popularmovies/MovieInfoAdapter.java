@@ -11,7 +11,6 @@ import com.squareup.picasso.Picasso;
 import java.util.List;
 
 public class MovieInfoAdapter extends ArrayAdapter<MovieInfo> {
-    private final String LOG_TAG = MovieInfoAdapter.class.getSimpleName();
 
     public MovieInfoAdapter(Context context, int resource, int textViewResourceId, List<MovieInfo> objects) {
         super(context, resource, textViewResourceId, objects);

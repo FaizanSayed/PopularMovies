@@ -4,7 +4,6 @@ import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.ExpandableListView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,11 +13,9 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 public class FetchMovieReviewsTask extends AsyncTask<String, Void, MovieReviewInfo[]> {
     private final String LOG_TAG = FetchMovieReviewsTask.class.getSimpleName();
@@ -86,7 +83,7 @@ public class FetchMovieReviewsTask extends AsyncTask<String, Void, MovieReviewIn
             URL url = new URL(builtUri.toString());
 
             urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setRequestMethod("GET");;
+            urlConnection.setRequestMethod("GET");
             urlConnection.connect();
 
             InputStream inputStream = urlConnection.getInputStream();
@@ -138,8 +135,6 @@ public class FetchMovieReviewsTask extends AsyncTask<String, Void, MovieReviewIn
             for(MovieReviewInfo movieReviewItem : result) {
                 mMovieReviewAdapter.add(movieReviewItem);
             }
-//                setListViewHeightBasedOnChildren(expandableListView);
-
         }
     }
 }

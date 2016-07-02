@@ -1,16 +1,11 @@
 package com.example.faizan.popularmovies;
 
-import android.content.ContentUris;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.util.Log;
-
-import com.example.faizan.popularmovies.data.MovieContract;
 
 import org.json.JSONArray;
 import org.json.JSONException;

@@ -13,15 +13,10 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.GridView;
 
-
 import java.util.ArrayList;
 
-/**
- * A placeholder fragment containing a simple view.
- */
 public class MovieFragment extends Fragment {
 
-    private final String LOG_TAG = MovieFragment.class.getSimpleName();
     private MovieInfoAdapter mMovieAdapter;
     private EndlessScrollListener endlessScrollListener;
     private GridView gridView;
@@ -114,9 +109,6 @@ public class MovieFragment extends Fragment {
         private boolean loading = true;
 
         public EndlessScrollListener() {
-        }
-        public EndlessScrollListener(int visibleThreshold) {
-            this.visibleThreshold = visibleThreshold;
         }
 
         @Override
