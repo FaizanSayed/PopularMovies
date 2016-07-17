@@ -15,10 +15,14 @@
 
     <string name="pref_sort_order_label_top_rated">Top Rated</string>
 
+    <string name="pref_sort_order_label_favourites">My Favourites</string>
+
     <string name="pref_sort_order_key">sort_order</string>
 
     <string name="pref_sort_order_most_popular">most_popular</string>
 
     <string name="pref_sort_order_top_rated">top_rated</string>
+
+    <string name="pref_sort_order_favourites">my_favourites</string>
 
 </resources>

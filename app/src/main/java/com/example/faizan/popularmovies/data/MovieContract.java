@@ -23,9 +23,6 @@ public class MovieContract {
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
 
-        public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_MOVIE;
-
 
         public static final String TABLE_NAME = "movie";
 
@@ -56,9 +53,6 @@ public class MovieContract {
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_VIDEO;
 
-        public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_VIDEO;
-
         public static final String TABLE_NAME = "video";
 
         public static final String COLUMN_MOVIE_VIDEO_ID = "movie_video_id";
@@ -77,10 +71,6 @@ public class MovieContract {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
 
-        public static Uri buildMovieVideoUribyMovie(String movie_id) {
-            return CONTENT_URI.buildUpon().appendPath(movie_id).build();
-        }
-
         public static String getMovieIdFromUri(Uri uri) {
             return uri.getPathSegments().get(1);
         }
@@ -93,9 +83,6 @@ public class MovieContract {
 
         public static final String CONTENT_TYPE =
                 ContentResolver.CURSOR_DIR_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_REVIEW;
-
-        public static final String CONTENT_ITEM_TYPE =
-                ContentResolver.CURSOR_ITEM_BASE_TYPE + "/" + CONTENT_AUTHORITY + "/" + PATH_REVIEW;
 
         public static final String TABLE_NAME = "review";
 
@@ -111,10 +98,6 @@ public class MovieContract {
 
         public static Uri buildMovieReviewUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
-        }
-
-        public static Uri buildMovieReviewUribyMovie(String movie_id) {
-            return CONTENT_URI.buildUpon().appendPath(movie_id).build();
         }
 
         public static String getMovieIdFromUri(Uri uri) {

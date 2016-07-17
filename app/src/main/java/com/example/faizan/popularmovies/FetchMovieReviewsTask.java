@@ -1,9 +1,14 @@
 package com.example.faizan.popularmovies;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.util.Log;
+
+import com.example.faizan.popularmovies.data.MovieContract;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -22,6 +27,18 @@ public class FetchMovieReviewsTask extends AsyncTask<String, Void, MovieReviewIn
     private final Context mContext;
 
     private MovieReviewAdapter mMovieReviewAdapter;
+
+    private static final String[] MOVIE_REVIEW_COLUMNS = {
+            MovieContract.ReviewEntry.COLUMN_MOVIE_ID,
+            MovieContract.ReviewEntry.COLUMN_AUTHOR,
+            MovieContract.ReviewEntry.COLUMN_CONTENT,
+            MovieContract.ReviewEntry.COLUMN_URL,
+    };
+
+    static final int COL_MOVIE_ID = 0;
+    static final int COL_MOVIE_REVIEW_AUTHOR = 1;
+    static final int COL_MOVIE_REVIEW_CONTENT = 2;
+    static final int COL_MOVIE_REVIEW_URL = 3;
 
     public FetchMovieReviewsTask(Context context, MovieReviewAdapter adapter) {
         mContext = context;
@@ -76,6 +93,33 @@ public class FetchMovieReviewsTask extends AsyncTask<String, Void, MovieReviewIn
                     "https://api.themoviedb.org/3/movie/" + params[0] + "/reviews";
             final String API_KEY_PARAM = "api_key";
 
+            SharedPreferences sharedPrefs =
+                    PreferenceManager.getDefaultSharedPreferences(mContext);
+            String sortOrder = sharedPrefs.getString(
+                    mContext.getString(R.string.pref_sort_order_key),
+                    mContext.getString(R.string.pref_sort_order_most_popular));
+            if (sortOrder.equals(mContext.getString(R.string.pref_sort_order_favourites))) {
+                Cursor movieReviewCursor = mContext.getContentResolver().query(
+                        MovieContract.ReviewEntry.CONTENT_URI,
+                        MOVIE_REVIEW_COLUMNS,
+                        MovieContract.ReviewEntry.COLUMN_MOVIE_ID + " = ?",
+                        new String[]{params[0]},
+                        null
+                );
+                int i = 0;
+                if (movieReviewCursor != null /*&& movieCursor.moveToFirst()*/) {
+                    MovieReviewInfo[] resultMovieReviewInfoItems = new MovieReviewInfo[movieReviewCursor.getCount()];
+                    while (movieReviewCursor.moveToNext()) {
+                        resultMovieReviewInfoItems[i++] = new MovieReviewInfo(movieReviewCursor.getString(COL_MOVIE_ID),
+                                movieReviewCursor.getString(COL_MOVIE_REVIEW_AUTHOR),
+                                movieReviewCursor.getString(COL_MOVIE_REVIEW_CONTENT),
+                                movieReviewCursor.getString(COL_MOVIE_REVIEW_URL));
+                    }
+                    movieReviewCursor.close();
+                    return resultMovieReviewInfoItems;
+                }
+            }
+
             builtUri = Uri.parse(MOVIE_REVIEW_BASE_URL).buildUpon()
                     .appendQueryParameter(API_KEY_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
                     .build();
@@ -87,7 +131,7 @@ public class FetchMovieReviewsTask extends AsyncTask<String, Void, MovieReviewIn
             urlConnection.connect();
 
             InputStream inputStream = urlConnection.getInputStream();
-            StringBuffer buffer = new StringBuffer();
+            StringBuilder buffer = new StringBuilder();
             if (inputStream == null) {
                 return null;
             }
@@ -95,7 +139,7 @@ public class FetchMovieReviewsTask extends AsyncTask<String, Void, MovieReviewIn
 
             String line;
             while((line = reader.readLine()) != null) {
-                buffer.append(line + "\n");
+                buffer.append(line.concat("\n"));
             }
 
             if (buffer.length() == 0) {

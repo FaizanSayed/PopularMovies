@@ -1,9 +1,14 @@
 package com.example.faizan.popularmovies;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.preference.PreferenceManager;
 import android.util.Log;
+
+import com.example.faizan.popularmovies.data.MovieContract;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -20,6 +25,20 @@ public class FetchMovieVideosTask extends AsyncTask<String, Void, MovieVideoInfo
     private final String LOG_TAG = FetchMovieVideosTask.class.getSimpleName();
     private MovieVideoAdapter mMovieVideoAdapter;
     private final Context mContext;
+
+    private static final String[] MOVIE_VIDEO_COLUMNS = {
+            MovieContract.VideoEntry.COLUMN_MOVIE_ID,
+            MovieContract.VideoEntry.COLUMN_KEY,
+            MovieContract.VideoEntry.COLUMN_NAME,
+            MovieContract.VideoEntry.COLUMN_SITE,
+            MovieContract.VideoEntry.COLUMN_TYPE,
+    };
+
+    static final int COL_MOVIE_ID = 0;
+    static final int COL_MOVIE_VIDEO_KEY = 1;
+    static final int COL_MOVIE_VIDEO_NAME = 2;
+    static final int COL_MOVIE_VIDEO_SITE = 3;
+    static final int COL_MOVIE_VIDEO_TYPE = 4;
 
     public FetchMovieVideosTask(Context context, MovieVideoAdapter adapter) {
         mContext = context;
@@ -65,6 +84,7 @@ public class FetchMovieVideosTask extends AsyncTask<String, Void, MovieVideoInfo
             return null;
         }
 
+
         HttpURLConnection urlConnection = null;
         BufferedReader reader = null;
 
@@ -77,18 +97,51 @@ public class FetchMovieVideosTask extends AsyncTask<String, Void, MovieVideoInfo
                     "https://api.themoviedb.org/3/movie/" + params[0] + "/videos";
             final String API_KEY_PARAM = "api_key";
 
+            SharedPreferences sharedPrefs =
+                    PreferenceManager.getDefaultSharedPreferences(mContext);
+            String sortOrder = sharedPrefs.getString(
+                    mContext.getString(R.string.pref_sort_order_key),
+                    mContext.getString(R.string.pref_sort_order_most_popular));
+
+            if (sortOrder.equals(mContext.getString(R.string.pref_sort_order_favourites))) {
+                Cursor movieVideoCursor = mContext.getContentResolver().query(
+                        MovieContract.VideoEntry.CONTENT_URI,
+                        MOVIE_VIDEO_COLUMNS,
+                        MovieContract.VideoEntry.COLUMN_MOVIE_ID + " = ?",
+                        new String[]{params[0]},
+                        null
+                );
+                int i = 0;
+                if (movieVideoCursor != null) {
+                    MovieVideoInfo[] resultMovieVideoInfoItems = new MovieVideoInfo[movieVideoCursor.getCount()];
+                    while (movieVideoCursor.moveToNext()) {
+                        resultMovieVideoInfoItems[i++] = new MovieVideoInfo(movieVideoCursor.getString(COL_MOVIE_ID),
+                                movieVideoCursor.getString(COL_MOVIE_VIDEO_KEY),
+                                movieVideoCursor.getString(COL_MOVIE_VIDEO_NAME),
+                                movieVideoCursor.getString(COL_MOVIE_VIDEO_SITE),
+                                movieVideoCursor.getString(COL_MOVIE_VIDEO_TYPE));
+                    }
+                    movieVideoCursor.close();
+
+                    return resultMovieVideoInfoItems;
+                }
+            }
+
             builtUri = Uri.parse(MOVIE_VIDEO_BASE_URL).buildUpon()
                     .appendQueryParameter(API_KEY_PARAM, BuildConfig.THE_MOVIE_DB_API_KEY)
                     .build();
 
+
+
+
             URL url = new URL(builtUri.toString());
 
             urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setRequestMethod("GET");;
+            urlConnection.setRequestMethod("GET");
             urlConnection.connect();
 
             InputStream inputStream = urlConnection.getInputStream();
-            StringBuffer buffer = new StringBuffer();
+            StringBuilder buffer = new StringBuilder();
             if (inputStream == null) {
                 return null;
             }
@@ -96,7 +149,7 @@ public class FetchMovieVideosTask extends AsyncTask<String, Void, MovieVideoInfo
 
             String line;
             while((line = reader.readLine()) != null) {
-                buffer.append(line + "\n");
+                buffer.append(line.concat("\n"));
             }
 
             if (buffer.length() == 0) {
@@ -137,7 +190,6 @@ public class FetchMovieVideosTask extends AsyncTask<String, Void, MovieVideoInfo
             for(MovieVideoInfo movieVideoItem : result) {
                 mMovieVideoAdapter.add(movieVideoItem);
             }
-            //setListViewHeightBasedOnChildren(movieVideoListView);
 
         }
     }

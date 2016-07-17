@@ -1,6 +1,8 @@
 package com.example.faizan.popularmovies;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -58,6 +60,7 @@ public class MovieFragment extends Fragment {
                         R.id.list_item_movies_imageview,
                         new ArrayList<MovieInfo>());
 
+
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
 
         // Get a reference to the GridView, and attach the adapter to it.
@@ -85,6 +88,7 @@ public class MovieFragment extends Fragment {
     }
 
     private void updateMovieList() {
+
         FetchMovieListTask movieListTask = new FetchMovieListTask(getActivity(), mMovieAdapter);
         mMovieAdapter.clear();
         endlessScrollListener = new EndlessScrollListener();
@@ -114,7 +118,12 @@ public class MovieFragment extends Fragment {
         @Override
         public void onScroll(AbsListView view, int firstVisibleItem,
                              int visibleItemCount, int totalItemCount) {
-            if (loading) {
+            SharedPreferences sharedPrefs =
+                    PreferenceManager.getDefaultSharedPreferences(getContext());
+            String sortOrder = sharedPrefs.getString(
+                    getContext().getString(R.string.pref_sort_order_key),
+                    getContext().getString(R.string.pref_sort_order_most_popular));
+            if (loading && !sortOrder.equals(getContext().getString(R.string.pref_sort_order_favourites))) {
                 if (totalItemCount > previousTotal) {
                     loading = false;
                     previousTotal = totalItemCount;
@@ -122,8 +131,7 @@ public class MovieFragment extends Fragment {
                 }
             }
             if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
-                // I load the next page of gigs using a background task,
-                // but you can call any function here.
+
                 new FetchMovieListTask(getActivity(), mMovieAdapter).execute(Integer.toString(currentPage + 1));
                 loading = true;
             }

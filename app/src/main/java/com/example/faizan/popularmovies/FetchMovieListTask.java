@@ -2,10 +2,13 @@ package com.example.faizan.popularmovies;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import com.example.faizan.popularmovies.data.MovieContract;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,10 +21,30 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+
+
 public class FetchMovieListTask extends AsyncTask<String, Void, MovieInfo[]> {
     private final String LOG_TAG = FetchMovieListTask.class.getSimpleName();
     private MovieInfoAdapter mMovieAdapter;
     private final Context mContext;
+
+    private static final String[] MOVIE_COLUMNS = {
+            MovieContract.MovieEntry.COLUMN_MOVIE_ID,
+            MovieContract.MovieEntry.COLUMN_TITLE,
+            MovieContract.MovieEntry.COLUMN_POSTER_PATH,
+            MovieContract.MovieEntry.COLUMN_OVERVIEW,
+            MovieContract.MovieEntry.COLUMN_RELEASE_DATE,
+            MovieContract.MovieEntry.COLUMN_POPULARITY,
+            MovieContract.MovieEntry.COLUMN_VOTE_AVERAGE,
+    };
+
+    static final int COL_MOVIE_ID = 0;
+    static final int COL_MOVIE_TITLE = 1;
+    static final int COL_MOVIE_POSTER_PATH = 2;
+    static final int COL_MOVIE_OVERVIEW = 3;
+    static final int COL_MOVIE_RELEASE_DATE = 4;
+    static final int COL_MOVIE_POPULARITY = 5;
+    static final int COL_MOVIE_VOTE_AVERAGE = 6;
 
     public FetchMovieListTask(Context context, MovieInfoAdapter adapter) {
         mMovieAdapter = adapter;
@@ -39,21 +62,13 @@ public class FetchMovieListTask extends AsyncTask<String, Void, MovieInfo[]> {
     private MovieInfo[] getMovieDataFromJson(String movieJsonStr)
             throws JSONException {
         // These are the names of the JSON objects that need to be extracted.
-        String TMDB_PAGE = "page";
         String TMDB_RESULTS = "results";
         String TMDB_POSTER_PATH = "poster_path";
-        String TMDB_ADULT = "false";
         String TMDB_OVERVIEW = "overview";
         String TMDB_RELEASE_DATE = "release_date";
-        String TMDB_GENRE_IDS = "genre_ids";
         String TMDB_ID = "id";
         String TMDB_ORIGINAL_TITLE = "original_title";
-        String TMDB_ORIGINAL_LANGUAGE = "original_language";
-        String TMDB_TITLE = "title";
-        String TMDB_BACKDROP_PATH = "backdrop_path";
         String TMDB_POPULARITY = "popularity";
-        String TMDB_VOTE_COUNT = "vote_count";
-        String TMDB_VIDEO = "video";
         String TMDB_VOTE_AVERAGE = "vote_average";
 
         JSONObject movieJson = new JSONObject(movieJsonStr);
@@ -94,13 +109,14 @@ public class FetchMovieListTask extends AsyncTask<String, Void, MovieInfo[]> {
         HttpURLConnection urlConnection = null;
         BufferedReader reader = null;
 
-        // Will contain the raw JSON response as a s    tring.
+        // Will contain the raw JSON response as a string.
         String movieJsonStr = null;
 
         Uri builtUri;
 
 
         try {
+
             // Construct the URL for the TheMovieDatabase query
             final String MOVIE_BASE_URL =
                     "https://api.themoviedb.org/3";
@@ -113,8 +129,32 @@ public class FetchMovieListTask extends AsyncTask<String, Void, MovieInfo[]> {
             String sortOrder = sharedPrefs.getString(
                     mContext.getString(R.string.pref_sort_order_key),
                     mContext.getString(R.string.pref_sort_order_most_popular));
+            Log.e(LOG_TAG, "Sort order: " + sortOrder);
+            if (sortOrder.equals(mContext.getString(R.string.pref_sort_order_favourites))) {
+                Cursor movieCursor = mContext.getContentResolver().query(
+                        MovieContract.MovieEntry.CONTENT_URI,
+                        MOVIE_COLUMNS,
+                        null, null, null
+                );
+                if (movieCursor != null) {
+                    MovieInfo[] resultMovieInfoItems = new MovieInfo[movieCursor.getCount()];
+                    int i = 0;
+                    Log.e(LOG_TAG, "Cursor count: " + movieCursor.getCount());
+                    while (movieCursor.moveToNext()) {
+                        Log.e(LOG_TAG, movieCursor.getString(COL_MOVIE_TITLE));
+                        resultMovieInfoItems[i++] = new MovieInfo(movieCursor.getString(COL_MOVIE_ID),
+                                movieCursor.getString(COL_MOVIE_POSTER_PATH),
+                                movieCursor.getString(COL_MOVIE_TITLE),
+                                movieCursor.getString(COL_MOVIE_OVERVIEW),
+                                movieCursor.getDouble(COL_MOVIE_POPULARITY),
+                                movieCursor.getDouble(COL_MOVIE_VOTE_AVERAGE),
+                                movieCursor.getString(COL_MOVIE_RELEASE_DATE));
+                    }
+                    movieCursor.close();
+                    return resultMovieInfoItems;
+                }
+            }
 
-            //Log.e(LOG_TAG, "sort order: " + sortOrder);
             String sort_by = "popularity.desc";
             if (sortOrder.equals(mContext.getString(R.string.pref_sort_order_top_rated))) {
                 builtUri = Uri.parse(MOVIE_BASE_URL + "/movie/top_rated?").buildUpon()
@@ -139,7 +179,7 @@ public class FetchMovieListTask extends AsyncTask<String, Void, MovieInfo[]> {
 
             // Read the input stream into a String
             InputStream inputStream = urlConnection.getInputStream();
-            StringBuffer buffer = new StringBuffer();
+            StringBuilder buffer = new StringBuilder();
             if (inputStream == null) {
                 // Nothing to do.
                 return null;
@@ -151,7 +191,7 @@ public class FetchMovieListTask extends AsyncTask<String, Void, MovieInfo[]> {
                 // Since it's JSON, adding a newline isn't necessary (it won't affect parsing)
                 // But it does make debugging a *lot* easier if you print out the completed
                 // buffer for debugging.
-                buffer.append(line + "\n");
+                buffer.append(line.concat("\n"));
             }
 
             if (buffer.length() == 0) {
@@ -161,7 +201,7 @@ public class FetchMovieListTask extends AsyncTask<String, Void, MovieInfo[]> {
             movieJsonStr = buffer.toString();
         } catch (IOException e) {
             Log.e(LOG_TAG, "Error ", e);
-            // If the code didn't successfully get the weather data, there's no point
+            // If the code didn't successfully get the data, there's no point
             // to parse it.
             return null;
         } finally {
