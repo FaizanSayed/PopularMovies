@@ -129,7 +129,6 @@ public class FetchMovieListTask extends AsyncTask<String, Void, MovieInfo[]> {
             String sortOrder = sharedPrefs.getString(
                     mContext.getString(R.string.pref_sort_order_key),
                     mContext.getString(R.string.pref_sort_order_most_popular));
-            Log.e(LOG_TAG, "Sort order: " + sortOrder);
             if (sortOrder.equals(mContext.getString(R.string.pref_sort_order_favourites))) {
                 Cursor movieCursor = mContext.getContentResolver().query(
                         MovieContract.MovieEntry.CONTENT_URI,
@@ -141,7 +140,6 @@ public class FetchMovieListTask extends AsyncTask<String, Void, MovieInfo[]> {
                     int i = 0;
                     Log.e(LOG_TAG, "Cursor count: " + movieCursor.getCount());
                     while (movieCursor.moveToNext()) {
-                        Log.e(LOG_TAG, movieCursor.getString(COL_MOVIE_TITLE));
                         resultMovieInfoItems[i++] = new MovieInfo(movieCursor.getString(COL_MOVIE_ID),
                                 movieCursor.getString(COL_MOVIE_POSTER_PATH),
                                 movieCursor.getString(COL_MOVIE_TITLE),
